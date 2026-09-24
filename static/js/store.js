@@ -778,6 +778,15 @@
   }
 
   /* ---------------- Store: read/write helpers ---------------- */
+  /* Coerce any Blob into a File so the Appwrite SDK (which matches
+     payloads with `instanceof File`) can upload it. */
+  function coerceToFile(blob) {
+    if (blob && blob instanceof File) { return blob; }
+    var safeType = (blob && blob.type) || 'image/jpeg';
+    var safeName = 'property-' + Date.now() + '.' + (safeType.split('/')[1] || 'jpg');
+    return new File([blob], safeName, { type: safeType });
+  }
+
   /* Upload a property photo Blob/File to the Storage bucket and resolve
      with a short public `/view` URL safe to store in the images column. */
   function uploadPropertyImage(blob) {
@@ -788,7 +797,7 @@
     return storage.createFile({
       bucketId: STORAGE_BUCKET,
       fileId: Appwrite.ID.unique(),
-      file: blob
+      file: coerceToFile(blob)
     }).then(function (file) {
       return c.endpoint + '/storage/buckets/' + STORAGE_BUCKET + '/files/' + file.$id + '/view?project=' + c.projectId;
     });
