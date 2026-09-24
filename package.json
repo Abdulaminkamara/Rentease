@@ -1,0 +1,9 @@
+{
+  "name": "rentease",
+  "version": "2.1.0",
+  "private": true,
+  "description": "RentEase - Online Rental and Property Listing Management System (Appwrite Cloud / TablesDB demo)",
+  "scripts": {
+    "test": "node test/lifecycle.test.mjs"
+  }
+}
