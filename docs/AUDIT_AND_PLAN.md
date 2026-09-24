@@ -42,7 +42,7 @@
 - Property detail (carousel, specs, amenities, reviews, listed-by)
 - Tenant booking request (duplicate pending guard), landlord approve/reject, property → `rented`
 - Reviews (only after approved booking, or admin), update allowed
-- Landlord property CRUD with multi-image upload → compressed data URLs
+- Landlord property CRUD with multi-image upload → compressed + uploaded to Appwrite Storage bucket, rows keep short `/view` URLs
 - Delete property cascades its bookings + reviews
 - Admin dashboard (stats, recent users/properties), admin user deactivate/activate
 - Flash messages (localStorage), role-guard redirects, offline "not configured" notice
@@ -66,7 +66,7 @@
 - **All-Users table permissions:** the live Cloud schema uses `any` full CRUD (the backend rejects the `users` role at table level, and the logged-out first-load seed needs create). Anyone can read every table (emails/phones/tenant ids) and — because no server enforces rules — could write too. Acceptable only as a labelled demo/deployment tradeoff; README must advise tightening for production.
 - **No server-side enforcement:** the app has no backend; role/ownership rules cannot be enforced outside the browser. Documented limitation — production requires an API layer with Appwrite permissions/backend SDK.
 - **No input server validation**, only client-side checks; acceptable for demo, must be documented.
-- Images are stored as data URLs inside table rows → size/quota risk; acceptable for demo.
+- Photos are uploaded to an `any`-read Appwrite Storage bucket and rows keep short `/view` URLs; no quota risk from base64 (TablesDB array elements cap at 1000 chars), but bucket/table permissions are open by demo design.
 
 ---
 
@@ -120,7 +120,7 @@
 - Curated Pexels gallery per sample listing (verified live URLs; nothing slum-stereotyping), expanded seed to 16 properties across SL communities (community stored in `pincode`, city/state kept) with fake street addresses removed from demo data.
 - Cards: lazy-loaded images, community location ("Wilberforce, Freetown"), "Sample Listing" badge; detail page: thumbnail strip + fullscreen lightbox, demo-explanation banner, low-res Og/SEO fallback image.
 - Hero replaced the plain gradient with a tropical West-African home photo + overlay; featured heading/localized copy; form "Pincode" relabelled "Community / Area".
-- Neutral "Property image unavailable" placeholder (no fake photographs); keyword search now also matches community (`pincode`); no Appwrite Storage bucket needed — photos live on rows.
+- Neutral "Property image unavailable" placeholder (no fake photographs); keyword search now also matches community (`pincode`); real uploads moved to an Appwrite Storage bucket (`property_photos`) because base64 data URLs exceed the 1000-char TablesDB array-element limit — rows now store short `/view` URLs.
 
 **Phase 6 — Testing & docs:**
 - Extend the Node smoke harness to the full lifecycle E2E (owner creates property → tenant applies → owner approves → rental + occupied → tenant rent status → rent recorded); run; fix regressions.

@@ -18,7 +18,7 @@ Authentication is handled by **Appwrite Account** and all data (users, propertie
 ### Key Features
 
 - Role-based authentication (Admin / Landlord / Tenant) via Appwrite
-- Property listing with a photo gallery (thumbnail strip + fullscreen lightbox; seed data uses Pexels imagery with "Sample Listing" labels; new uploads are compressed into data URLs)
+- Property listing with a photo gallery (thumbnail strip + fullscreen lightbox; seed data uses Pexels imagery with "Sample Listing" labels; new uploads go to the Appwrite Storage bucket)
 - Advanced search & filters (keyword, city, type, price, bedrooms)
 - Booking / rental request workflow with approval
 - Rent payments tracking: landlords **record actual receipts** (status always derived, never fabricated)
@@ -144,7 +144,7 @@ RentEase/
 - **All app data** (users, properties, bookings, rentals, payments, saved properties, notifications, reports, reviews) → Appwrite **TablesDB**.
 - The user's role, username and phone are stored both in the Appwrite account **preferences** and mirrored in the `users` table (so the admin dashboard can list and deactivate users).
 - **Flash messages** stay in `localStorage` (short-lived UI notices, not app data).
-- **Property photos** in the seed data are hosted online (Pexels, chosen so nothing looks like a deliberate "slum" stereotype) and each sample listing is clearly badged **"Sample Listing"** in the UI. New uploads (real listings) are compressed to data URLs and stored in the property's `images` array attribute — photos belong to the property row, so **no Appwrite Storage bucket is needed** for the current architecture. When rows contain no real photo a neutral *"Property image unavailable"* placeholder is shown (never a fake photograph).
+- **Property photos** in the seed data are hosted online (Pexels, chosen so nothing looks like a deliberate "slum" stereotype) and each sample listing is clearly badged **"Sample Listing"** in the UI. New uploads (real listings) are downscaled in the browser, uploaded to the **Appwrite Storage bucket `property_photos`**, and the property row's `images` array stores the short public `/view` URLs — needed because TablesDB array elements are capped at 1000 characters (base64 data URLs blow past that and the row is rejected). When rows contain no real photo a neutral *"Property image unavailable"* placeholder is shown (never a fake photograph).
 - **Payments** are only ever written when a landlord records an actual receipt — rent schedule/status (`paid`, `due_soon`, `overdue`, …) is always derived.
 - **Notifications** are generated only by real events (application submitted/approved/rejected, rental confirmed, rent due soon/overdue, report received).
 - Business rules are documented and enforced in the data layer + page scripts; see **`docs/PROPERTY_PLATFORM_RULES.md`** (production caveat included).
@@ -196,9 +196,9 @@ probe rows were deleted so the app's own seed runs on first load.
 |-----------|-----------------------------------------|
 | Frontend  | HTML5, CSS3, JavaScript (ES5)           |
 | UI        | Bootstrap 5 + Bootstrap Icons           |
-| Backend   | Appwrite Cloud (2.x) – Account + TablesDB |
+| Backend   | Appwrite Cloud (2.x) – Account + TablesDB + Storage |
 | SDK       | `appwrite@26.2.0` (Web SDK, CDN)        |
-| Images    | Pexels seed photos; Canvas compression → data URLs |
+| Images    | Pexels seed photos; new uploads → Appwrite Storage bucket (`property_photos`) |
 
 ---
 

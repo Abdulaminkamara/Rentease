@@ -10,9 +10,13 @@
   var keptImages = [];
   var newImages = [];
 
+  function dataUrlToBlob(dataUrl) {
+    return fetch(dataUrl).then(function (res) { return res.blob(); });
+  }
+
   function renderPreview() {
     var wrap = document.getElementById('image-preview');
-    var all = keptImages.concat(newImages);
+    var all = keptImages.concat(newImages.map(function (img) { return img.url; }));
     wrap.innerHTML = all.map(function (img, i) {
       var isNew = i >= keptImages.length;
       return '<div class="position-relative" style="width:90px;height:70px;">' +
@@ -93,8 +97,15 @@
       });
       Promise.all(tasks).then(function (results) {
         results.forEach(function (dataUrl) {
-          if (dataUrl) { newImages.push(dataUrl); }
+          if (!dataUrl) { return; }
+          dataUrlToBlob(dataUrl).then(function (blob) {
+            newImages.push({ url: dataUrl, blob: blob });
+            renderPreview();
+          });
         });
+        if (newImages.length > 6) {
+          newImages = newImages.slice(0, 6);
+        }
         renderPreview();
         fileInput.value = '';
       }).catch(function (err) {
@@ -122,8 +133,7 @@
         bathrooms: Number(document.getElementById('f-bathrooms').value) || 1,
         area_sqft: Number(document.getElementById('f-area').value) || null,
         amenities: document.getElementById('f-amenities').value.trim(),
-        is_furnished: document.getElementById('f-furnished').checked,
-        images: keptImages.concat(newImages)
+        is_furnished: document.getElementById('f-furnished').checked
       };
 
       if (!data.title || !data.description || !data.address || !data.city || !data.state || !data.price) {
@@ -135,28 +145,43 @@
         return;
       }
 
-      var save;
-      if (editId) {
-        var existing = Store.findProperty(editId);
-        if (!existing) {
-          Session.flash('danger', 'Property not found.');
-          window.location.href = 'landlord-dashboard.html';
-          return;
+      var btn = document.getElementById('save-button');
+      var uploads = Promise.all(newImages.map(function (img) {
+        return RE.uploadPropertyImage(img.blob);
+      }));
+
+      uploads.then(function (urls) {
+        data.images = keptImages.concat(urls);
+        btn.disabled = true;
+        btn.textContent = 'Saving\u2026';
+        var save;
+        if (editId) {
+          var existing = Store.findProperty(editId);
+          if (!existing) {
+            Session.flash('danger', 'Property not found.');
+            window.location.href = 'landlord-dashboard.html';
+            return;
+          }
+          if (!Store.canManageProperty(user, existing)) {
+            errEl.textContent = 'You do not have permission to edit this property.';
+            btn.disabled = false;
+            btn.textContent = 'Save Changes';
+            return;
+          }
+          Object.keys(data).forEach(function (k) { existing[k] = data[k]; });
+          save = Store.updateProperty(existing);
+        } else {
+          save = Store.addProperty(data);
         }
-        if (!Store.canManageProperty(user, existing)) {
-          errEl.textContent = 'You do not have permission to edit this property.';
-          return;
-        }
-        Object.keys(data).forEach(function (k) { existing[k] = data[k]; });
-        save = Store.updateProperty(existing);
-      } else {
-        save = Store.addProperty(data);
-      }
-      save.then(function () {
+        return save;
+      }).then(function () {
         Session.flash('success', editId ? 'Property updated successfully!' : 'Property listed successfully!');
         window.location.href = 'landlord-dashboard.html';
-      }).catch(function () {
-        Session.flash('danger', 'Could not save the property. Please try again.');
+      }).catch(function (err) {
+        btn.disabled = false;
+        btn.textContent = editId ? 'Save Changes' : 'List Property';
+        console.error('RentEase save failed:', err);
+        Session.flash('danger', 'Could not save the property. ' + (err && err.message ? err.message : 'Please try again.'));
       });
     });
     });

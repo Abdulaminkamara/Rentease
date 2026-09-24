@@ -60,6 +60,14 @@ const Appwrite = {
       return { $id: a.$id, email: a.email, name: a.name, prefs: this.prefs || {} };
     }
   },
+  Storage: class {
+    constructor(client) { this.client = client; }
+    async createFile({ bucketId, fileId, file }) {
+      if (!this.client.files) this.client.files = {};
+      this.client.files[fileId] = file;
+      return { $id: fileId };
+    }
+  },
   TablesDB: class {
     constructor() { this.data = {}; }
     row(table) { if (!this.data[table]) this.data[table] = {}; return this.data[table]; }

@@ -84,8 +84,15 @@ Date: 2026-09-24
   Bo, Waterloo). Community/area lives in the existing `pincode` column (UI now calls it
   "Community / Area"); fake street addresses were removed from demo rows (`address = ''`).
 - Each sample listing got a curated 4–5 photo **Pexels gallery** (all 67 URLs HEAD-verified,
-  `w=1200`, no rural-hut/slum imagery). Photos stay in the `properties.images` row array —
-  **no Appwrite Storage bucket was created** (architecture doesn't require one).
+  `w=1200`, no rural-hut/slum imagery). Seed photos stay in the `properties.images` row array as
+  short external URLs — **no bucket upload needed for seed data**.
+- Follow-up bugfix (reported 400 `Invalid document structure: Attribute "images['0']"... no longer
+  than 1000 chars` on real uploads): TablesDB caps each array element at 1000 characters, so the old
+  base64 data-URL approach always failed for photos. Real landlord uploads now go through the
+  **Appwrite Storage bucket `property_photos`** (`any` read, 5 MB cap, jpg/jpeg/png/webp): the form
+  downscales each new image in-browser, uploads it, and stores the short public `/view` URL in
+  `images`. Seed rows are untouched. Verified end-to-end against the live project: guest upload,
+  unauthenticated `/view` 200, and property row creation with a 137-char image URL all succeed.
 - UI: card lazy-load + "Sample Listing" badge + community location; detail page thumbnail strip,
   fullscreen lightbox, and a demo-explanation banner; neutral "Property image unavailable"
   placeholder replaces the old loud-gradient fake image; hero uses a tropical home photo overlay.

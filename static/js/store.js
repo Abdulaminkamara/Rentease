@@ -23,9 +23,16 @@
   var client = null;
   var account = null;
   var tablesDB = null;
+  var storage = null;
   var initPromise = null;
   var offline = false;
   var currentUser = null;
+
+  /* Storage bucket for landlord-uploaded property photos. The `images`
+     array column cannot hold base64 data URLs (each element max 1000
+     chars in TablesDB), so uploads live here and rows store short
+     `/view` URLs that resolve to the file. */
+  var STORAGE_BUCKET = 'property_photos';
 
   /* ---------------- config helpers ---------------- */
   function configure() {
@@ -771,6 +778,27 @@
   }
 
   /* ---------------- Store: read/write helpers ---------------- */
+  /* Upload a property photo Blob/File to the Storage bucket and resolve
+     with a short public `/view` URL safe to store in the images column. */
+  function uploadPropertyImage(blob) {
+    if (!storage) {
+      return Promise.reject(new Error('Storage is not setup. Check your Appwrite config.'));
+    }
+    var c = configure();
+    return storage.createFile({
+      bucketId: STORAGE_BUCKET,
+      fileId: Appwrite.ID.unique(),
+      file: blob
+    }).then(function (file) {
+      return c.endpoint + '/storage/buckets/' + STORAGE_BUCKET + '/files/' + file.$id + '/view?project=' + c.projectId;
+    });
+  }
+
+  function storageUrlForFile(fileId) {
+    var c = configure();
+    return c.endpoint + '/storage/buckets/' + STORAGE_BUCKET + '/files/' + fileId + '/view?project=' + c.projectId;
+  }
+
   var Store = {
     users: [],
     properties: [],
@@ -1529,6 +1557,7 @@
     client = new Appwrite.Client().setEndpoint(c.endpoint).setProject(c.projectId);
     account = new Appwrite.Account(client);
     tablesDB = new Appwrite.TablesDB(client);
+    storage = new Appwrite.Storage(client);
   }
 
   function init() {
@@ -1581,7 +1610,7 @@
     Store: Store,
     Session: Session,
     get api() {
-      return { client: client, account: account, tablesDB: tablesDB };
+      return { client: client, account: account, tablesDB: tablesDB, storage: storage };
     },
     get offline() {
       return offline;
@@ -1590,6 +1619,7 @@
     seedDemo: seedDemo,
     resetDemo: resetDemo,
     placeholderImage: placeholderImage,
+    uploadPropertyImage: uploadPropertyImage,
     nowISO: nowISO,
     isoDaysFromNow: isoDaysFromNow,
     isoDaysAgo: isoDaysAgo,
