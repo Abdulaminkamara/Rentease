@@ -18,7 +18,7 @@
 (function () {
   'use strict';
   window.REConfig = {
-    endpoint: 'https://cloud.appwrite.io/v1',
+    endpoint: 'https://fra.cloud.appwrite.io/v1',
     projectId: '6ab57b9a00083af710b3',
     databaseId: '6ab57cc00006dfad73ba',
     tables: {

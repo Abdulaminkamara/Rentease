@@ -5,5 +5,8 @@
   "description": "RentEase - Online Rental and Property Listing Management System (Appwrite Cloud / TablesDB demo)",
   "scripts": {
     "test": "node test/lifecycle.test.mjs"
+  },
+  "dependencies": {
+    "appwrite": "^28.0.0"
   }
 }

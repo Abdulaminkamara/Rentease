@@ -1553,6 +1553,14 @@
 
   /* ---------------- App initialisation ---------------- */
   function initClient() {
+    var appClient = window.RentEase && window.RentEase.AppClient;
+    if (appClient) {
+      client = appClient.client;
+      account = appClient.account;
+      tablesDB = appClient.tablesDB;
+      storage = appClient.storage;
+      return;
+    }
     var c = configure();
     client = new Appwrite.Client().setEndpoint(c.endpoint).setProject(c.projectId);
     account = new Appwrite.Account(client);
