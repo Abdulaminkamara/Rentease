@@ -558,13 +558,69 @@
      data and must carry the "Sample Listing" badge. */
   var DEMO_LANDLORD_IDS = ['landlord', 'landlord2', 'landlord3', 'landlord4'];
 
-  /* Builds a Pexels CDN image URL for a demo photo id. Pexels images are
-     freely reusable; we use them only as illustrative placeholders for
-     sample listings (labelled "Sample Listing" in the UI), never as if
-     they were the actual property at the listed address. */
-  function px(id, w) {
-    return 'https://images.pexels.com/photos/' + id + '/pexels-photo-' + id +
-      '.jpeg?auto=compress&cs=tinysrgb&w=' + (w || 1200);
+  /* Sample photos are freely reusable Pexels images, fetched once and then
+     uploaded into this project's own Storage bucket so the demo stores its
+     photos exactly the way a landlord's upload does. The seed uses them only
+     as illustrative placeholders for sample listings (labelled "Sample
+     Listing" in the UI), never as if they were the actual property at the
+     listed address. */
+  function photoSourceUrl(photoId) {
+    return 'https://images.pexels.com/photos/' + photoId + '/pexels-photo-' + photoId +
+      '.jpeg?auto=compress&cs=tinysrgb&w=900';
+  }
+
+  /* Deterministic per photo, so seeding twice re-uses the same stored file
+     instead of piling up duplicates in the bucket. */
+  function photoFileId(photoId) {
+    return 'demo-img-' + photoId;
+  }
+
+  function isStoredImage(url) {
+    return typeof url === 'string' && url.indexOf('/storage/buckets/' + STORAGE_BUCKET + '/files/') !== -1;
+  }
+
+  /* Downloads one sample photo and uploads it to the bucket, resolving with
+     the public `/view` URL to store in the property row. Falls back to the
+     remote URL if the download or upload is unavailable, so seeding still
+     produces visible photos. */
+  function uploadSamplePhoto(photoId) {
+    var fileId = photoFileId(photoId);
+    if (!storage || typeof fetch !== 'function') {
+      return Promise.resolve(photoSourceUrl(photoId));
+    }
+    return fetch(photoSourceUrl(photoId))
+      .then(function (res) {
+        if (!res.ok) { throw new Error('HTTP ' + res.status); }
+        return res.blob();
+      })
+      .then(function (blob) {
+        return storage.createFile({
+          bucketId: STORAGE_BUCKET,
+          fileId: fileId,
+          file: coerceToFile(blob, fileId + '.jpg')
+        }).then(function () {
+          return storageUrlForFile(fileId);
+        });
+      })
+      .catch(function (err) {
+        /* 409 = this photo was already uploaded by an earlier run, which is
+           the expected outcome on every load after the first. */
+        if (err && (err.code === 409 || /already exists/i.test(err.message || ''))) {
+          return storageUrlForFile(fileId);
+        }
+        return photoSourceUrl(photoId);
+      });
+  }
+
+  function uploadSamplePhotos(photoIds) {
+    if (!Array.isArray(photoIds) || !photoIds.length) { return Promise.resolve([]); }
+    return Promise.all(photoIds.map(function (id) { return uploadSamplePhoto(id); }));
+  }
+
+  /* Properties already pointing at the bucket are left untouched; anything
+     still hotlinked is uploaded once and the row is rewritten. */
+  function hasStoredImages(prop) {
+    return Array.isArray(prop.images) && prop.images.length > 0 && prop.images.every(isStoredImage);
   }
 
   function demoProperties() {
@@ -577,7 +633,7 @@
         price: 6000, property_type: 'apartment', bedrooms: 2, bathrooms: 2, area_sqft: 950,
         amenities: 'WiFi, Parking, AC, Borehole Water, Generator, Security, Fitted Kitchen', status: 'available', is_furnished: true,
         verification: 'verified',
-        images: [px(18153132), px(6980724), px(7712453), px(6908565), px(7534282)],
+        images: [18153132, 6980724, 7712453, 6908565, 7534282],
         created_at: isoDaysAgo(12), updated_at: isoDaysAgo(12)
       },
       {
@@ -587,7 +643,7 @@
         address: '', city: 'Freetown', state: 'Western Area', pincode: 'Lumley',
         price: 3500, property_type: 'studio', bedrooms: 1, bathrooms: 1, area_sqft: 420,
         amenities: 'WiFi, AC, Housekeeping, Borehole Water, Security', status: 'available', is_furnished: true,
-        images: [px(8762759), px(29012619), px(6782479), px(18033166)],
+        images: [8762759, 29012619, 6782479, 18033166],
         created_at: isoDaysAgo(9), updated_at: isoDaysAgo(9)
       },
       {
@@ -597,7 +653,7 @@
         address: '', city: 'Bo', state: 'Southern Province', pincode: 'New London',
         price: 12000, property_type: 'house', bedrooms: 3, bathrooms: 3, area_sqft: 2100,
         amenities: 'Car Parking, Garden, Security, Borehole Water, CCTV, Fenced Compound', status: 'available', is_furnished: true,
-        images: [px(7061662), px(30386991), px(6934170), px(7045356), px(33753437)],
+        images: [7061662, 30386991, 6934170, 7045356, 33753437],
         created_at: isoDaysAgo(20), updated_at: isoDaysAgo(20)
       },
       {
@@ -608,7 +664,7 @@
         price: 18000, property_type: 'villa', bedrooms: 4, bathrooms: 4, area_sqft: 3200,
         amenities: 'Private Garden, Parking, AC, Generator, Borehole Water, CCTV, 24h Security', status: 'pending', is_furnished: true,
         verification: 'verified',
-        images: [px(34277690), px(34688219), px(34574606), px(6957081), px(33868434)],
+        images: [34277690, 34688219, 34574606, 6957081, 33868434],
         created_at: isoDaysAgo(6), updated_at: isoDaysAgo(6)
       },
       {
@@ -618,7 +674,7 @@
         address: '', city: 'Freetown', state: 'Western Area', pincode: 'Congo Town',
         price: 1800, property_type: 'room', bedrooms: 1, bathrooms: 1, area_sqft: 220,
         amenities: 'WiFi, Borehole Water, CCTV, Housekeeping, Closed Compound', status: 'rented', is_furnished: true,
-        images: [px(1974596), px(9899871), px(4221389), px(12329135)],
+        images: [1974596, 9899871, 4221389, 12329135],
         created_at: isoDaysAgo(15), updated_at: isoDaysAgo(15)
       },
       {
@@ -628,7 +684,7 @@
         address: '', city: 'Freetown', state: 'Western Area', pincode: 'Wellington',
         price: 5500, property_type: 'apartment', bedrooms: 2, bathrooms: 2, area_sqft: 1050,
         amenities: 'Parking, Borehole Water, Security, CCTV, Fenced Compound', status: 'available', is_furnished: false,
-        images: [px(12081268), px(27164969), px(13043955), px(6186828)],
+        images: [12081268, 27164969, 13043955, 6186828],
         created_at: isoDaysAgo(3), updated_at: isoDaysAgo(3)
       },
       {
@@ -638,7 +694,7 @@
         address: '', city: 'Freetown', state: 'Western Area', pincode: 'Juba',
         price: 22000, property_type: 'house', bedrooms: 4, bathrooms: 3, area_sqft: 2600,
         amenities: 'Private Garden, Parking, AC, Borehole Water, Generator, CCTV, Fenced Compound', status: 'available', is_furnished: true,
-        images: [px(15691650), px(38975400), px(6434592), px(6527057), px(15456260)],
+        images: [15691650, 38975400, 6434592, 6527057, 15456260],
         created_at: isoDaysAgo(28), updated_at: isoDaysAgo(28)
       },
       {
@@ -648,7 +704,7 @@
         address: '', city: 'Freetown', state: 'Western Area', pincode: 'Aberdeen',
         price: 8500, property_type: 'apartment', bedrooms: 3, bathrooms: 2, area_sqft: 1250,
         amenities: 'WiFi, Parking, AC, Generator, Security, Fitted Kitchen', status: 'available', is_furnished: true,
-        images: [px(9308434), px(7546648), px(6903157), px(7045356), px(12329135)],
+        images: [9308434, 7546648, 6903157, 7045356, 12329135],
         created_at: isoDaysAgo(18), updated_at: isoDaysAgo(18)
       },
       {
@@ -658,7 +714,7 @@
         address: '', city: 'Freetown', state: 'Western Area', pincode: 'Lumley',
         price: 6500, property_type: 'apartment', bedrooms: 2, bathrooms: 2, area_sqft: 950,
         amenities: 'WiFi, Furnished, AC, Generator, Borehole Water, Security', status: 'available', is_furnished: true,
-        images: [px(38865714), px(8134818), px(7712453), px(18033166), px(7031719)],
+        images: [38865714, 8134818, 7712453, 18033166, 7031719],
         created_at: isoDaysAgo(16), updated_at: isoDaysAgo(16)
       },
       {
@@ -668,7 +724,7 @@
         address: '', city: 'Freetown', state: 'Western Area', pincode: 'Hill Station',
         price: 16000, property_type: 'house', bedrooms: 3, bathrooms: 3, area_sqft: 2000,
         amenities: 'Private Garden, Parking, Borehole Water, Solar Backup, Security, Fenced Compound', status: 'available', is_furnished: false,
-        images: [px(33868434), px(29012619), px(8135118), px(6908565), px(7534282)],
+        images: [33868434, 29012619, 8135118, 6908565, 7534282],
         created_at: isoDaysAgo(22), updated_at: isoDaysAgo(22)
       },
       {
@@ -678,7 +734,7 @@
         address: '', city: 'Freetown', state: 'Western Area', pincode: 'Brookfields',
         price: 9800, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1450,
         amenities: 'Veranda, Parking, Borehole Water, Security, CCTV, Fenced Compound', status: 'available', is_furnished: true,
-        images: [px(12919815), px(12740950), px(6980724), px(14631824), px(4221389)],
+        images: [12919815, 12740950, 6980724, 14631824, 4221389],
         created_at: isoDaysAgo(11), updated_at: isoDaysAgo(11)
       },
       {
@@ -688,7 +744,7 @@
         address: '', city: 'Freetown', state: 'Western Area', pincode: 'Goderich',
         price: 5200, property_type: 'apartment', bedrooms: 2, bathrooms: 1, area_sqft: 850,
         amenities: 'WiFi, Parking, Generator, Borehole Water, Security', status: 'available', is_furnished: true,
-        images: [px(11643330), px(30386991), px(6934170), px(6186828), px(15456260)],
+        images: [11643330, 30386991, 6934170, 6186828, 15456260],
         created_at: isoDaysAgo(14), updated_at: isoDaysAgo(14)
       },
       {
@@ -698,7 +754,7 @@
         address: '', city: 'Waterloo', state: 'Western Area', pincode: 'Community Road',
         price: 7000, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1300,
         amenities: 'Garden, Parking, Borehole Water, Fenced Compound, Security', status: 'available', is_furnished: false,
-        images: [px(27466670), px(1974596), px(27164969), px(9899871), px(6908565)],
+        images: [27466670, 1974596, 27164969, 9899871, 6908565],
         created_at: isoDaysAgo(26), updated_at: isoDaysAgo(26)
       },
       {
@@ -709,7 +765,7 @@
         price: 11000, property_type: 'house', bedrooms: 3, bathrooms: 3, area_sqft: 1700,
         amenities: 'Terrace, Parking, AC, Solar Backup, CCTV, 24h Security, Fitted Kitchen', status: 'available', is_furnished: true,
         verification: 'verified',
-        images: [px(6400270), px(12422474), px(29012619), px(34574606), px(6527057)],
+        images: [6400270, 12422474, 29012619, 34574606, 6527057],
         created_at: isoDaysAgo(8), updated_at: isoDaysAgo(8)
       },
       {
@@ -719,7 +775,7 @@
         address: '', city: 'Freetown', state: 'Western Area', pincode: 'Kissy',
         price: 6000, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1200,
         amenities: 'Parking, Borehole Water, Fenced Compound, Security', status: 'available', is_furnished: false,
-        images: [px(18514152), px(27164969), px(13043955), px(7045356)],
+        images: [18514152, 27164969, 13043955, 7045356],
         created_at: isoDaysAgo(30), updated_at: isoDaysAgo(30)
       },
       {
@@ -729,7 +785,7 @@
         address: '', city: 'Freetown', state: 'Western Area', pincode: 'Congo Town',
         price: 3000, property_type: 'studio', bedrooms: 1, bathrooms: 1, area_sqft: 400,
         amenities: 'WiFi, Borehole Water, Security, Fenced Compound', status: 'available', is_furnished: true,
-        images: [px(12422474), px(7546648), px(6782479), px(4221389), px(12329135)],
+        images: [12422474, 7546648, 6782479, 4221389, 12329135],
         created_at: isoDaysAgo(5), updated_at: isoDaysAgo(5)
       },
       {
@@ -739,7 +795,7 @@
         address: '', city: 'Kenema', state: 'Eastern Province', pincode: 'Kenema Town',
         price: 4500, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1400,
         amenities: 'Garden, Parking, Borehole Water, Fenced Compound, Security', status: 'available', is_furnished: false,
-        images: [px(7061662), px(30386991), px(6934170), px(7045356)],
+        images: [7061662, 30386991, 6934170, 7045356],
         created_at: isoDaysAgo(7), updated_at: isoDaysAgo(7)
       },
       {
@@ -749,7 +805,7 @@
         address: '', city: 'Kenema', state: 'Eastern Province', pincode: 'Dodo',
         price: 2800, property_type: 'apartment', bedrooms: 2, bathrooms: 2, area_sqft: 900,
         amenities: 'WiFi, Parking, Generator, Borehole Water, Fitted Kitchen, Security', status: 'available', is_furnished: true,
-        images: [px(12081268), px(27164969), px(13043955), px(6186828)],
+        images: [12081268, 27164969, 13043955, 6186828],
         created_at: isoDaysAgo(4), updated_at: isoDaysAgo(4)
       },
       {
@@ -759,7 +815,7 @@
         address: '', city: 'Kenema', state: 'Eastern Province', pincode: 'Kenema Field',
         price: 1100, property_type: 'room', bedrooms: 1, bathrooms: 1, area_sqft: 200,
         amenities: 'WiFi, Borehole Water, Housekeeping, Security, Fenced Compound', status: 'available', is_furnished: true,
-        images: [px(1974596), px(9899871), px(4221389), px(12329135)],
+        images: [1974596, 9899871, 4221389, 12329135],
         created_at: isoDaysAgo(6), updated_at: isoDaysAgo(6)
       },
       {
@@ -770,7 +826,7 @@
         price: 3500, property_type: 'apartment', bedrooms: 2, bathrooms: 2, area_sqft: 950,
         amenities: 'WiFi, Furnished, AC, Generator, Borehole Water, 24h Security, Fitted Kitchen', status: 'available', is_furnished: true,
         verification: 'verified',
-        images: [px(15691650), px(38975400), px(6434592), px(6527057)],
+        images: [15691650, 38975400, 6434592, 6527057],
         created_at: isoDaysAgo(2), updated_at: isoDaysAgo(2)
       },
       {
@@ -780,7 +836,7 @@
         address: '', city: 'Port Loko', state: 'Northern Province', pincode: 'Makeni Road',
         price: 3800, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1250,
         amenities: 'Parking, Borehole Water, Fenced Compound, Garden, Security', status: 'available', is_furnished: false,
-        images: [px(9308434), px(7546648), px(6903157), px(7045356)],
+        images: [9308434, 7546648, 6903157, 7045356],
         created_at: isoDaysAgo(10), updated_at: isoDaysAgo(10)
       },
       {
@@ -790,7 +846,7 @@
         address: '', city: 'Koidu', state: 'North East Province', pincode: 'Koidu Town',
         price: 5200, property_type: 'house', bedrooms: 4, bathrooms: 3, area_sqft: 2100,
         amenities: 'Private Garden, Parking, Generator, Borehole Water, CCTV, Fenced Compound', status: 'available', is_furnished: true,
-        images: [px(34277690), px(34688219), px(34574606), px(6957081)],
+        images: [34277690, 34688219, 34574606, 6957081],
         created_at: isoDaysAgo(17), updated_at: isoDaysAgo(17)
       },
       {
@@ -801,7 +857,7 @@
         price: 4000, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1300,
         amenities: 'Veranda, Parking, Borehole Water, Garden, Fenced Compound, Security', status: 'available', is_furnished: true,
         verification: 'verified',
-        images: [px(15691650), px(7712453), px(8134818), px(18033166)],
+        images: [15691650, 7712453, 8134818, 18033166],
         created_at: isoDaysAgo(8), updated_at: isoDaysAgo(8)
       },
       {
@@ -811,7 +867,7 @@
         address: '', city: 'Lunsar', state: 'Northern Province', pincode: 'Lunsar Town',
         price: 2200, property_type: 'apartment', bedrooms: 2, bathrooms: 1, area_sqft: 800,
         amenities: 'Parking, Borehole Water, Fitted Kitchen, Security, Fenced Compound', status: 'available', is_furnished: false,
-        images: [px(6400270), px(12422474), px(29012619), px(7031719)],
+        images: [6400270, 12422474, 29012619, 7031719],
         created_at: isoDaysAgo(13), updated_at: isoDaysAgo(13)
       },
       {
@@ -821,7 +877,7 @@
         address: '', city: 'Makeni', state: 'Northern Province', pincode: 'Maghnik',
         price: 1800, property_type: 'studio', bedrooms: 1, bathrooms: 1, area_sqft: 380,
         amenities: 'WiFi, Borehole Water, Housekeeping, Security, Fitted Kitchen', status: 'available', is_furnished: true,
-        images: [px(8762759), px(7546648), px(6782479), px(4221389)],
+        images: [8762759, 7546648, 6782479, 4221389],
         created_at: isoDaysAgo(5), updated_at: isoDaysAgo(5)
       },
       {
@@ -832,7 +888,7 @@
         price: 7500, property_type: 'villa', bedrooms: 4, bathrooms: 3, area_sqft: 2800,
         amenities: 'Private Garden, Parking, AC, Generator, Solar Backup, Borehole Water, 24h Security', status: 'available', is_furnished: true,
         verification: 'verified',
-        images: [px(38865714), px(8134818), px(34574606), px(6527057)],
+        images: [38865714, 8134818, 34574606, 6527057],
         created_at: isoDaysAgo(19), updated_at: isoDaysAgo(19)
       },
       {
@@ -842,7 +898,7 @@
         address: '', city: 'Bo', state: 'Southern Province', pincode: 'Bo Town',
         price: 4800, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1500,
         amenities: 'Parking, Generator, Borehole Water, Garden, CCTV, Fenced Compound', status: 'available', is_furnished: true,
-        images: [px(12919815), px(12740950), px(6980724), px(14631824)],
+        images: [12919815, 12740950, 6980724, 14631824],
         created_at: isoDaysAgo(9), updated_at: isoDaysAgo(9)
       },
       {
@@ -853,7 +909,7 @@
         price: 3200, property_type: 'apartment', bedrooms: 2, bathrooms: 2, area_sqft: 900,
         amenities: 'WiFi, Furnished, AC, Generator, Borehole Water, Security, Fitted Kitchen', status: 'available', is_furnished: true,
         verification: 'verified',
-        images: [px(11643330), px(30386991), px(6934170), px(15456260)],
+        images: [11643330, 30386991, 6934170, 15456260],
         created_at: isoDaysAgo(3), updated_at: isoDaysAgo(3)
       },
       {
@@ -863,7 +919,7 @@
         address: '', city: 'Bo', state: 'Southern Province', pincode: 'Konti',
         price: 2000, property_type: 'studio', bedrooms: 1, bathrooms: 1, area_sqft: 350,
         amenities: 'WiFi, Borehole Water, Housekeeping, Security, Fenced Compound', status: 'available', is_furnished: true,
-        images: [px(12422474), px(7546648), px(7031719), px(12329135)],
+        images: [12422474, 7546648, 7031719, 12329135],
         created_at: isoDaysAgo(6), updated_at: isoDaysAgo(6)
       },
       {
@@ -873,7 +929,7 @@
         address: '', city: 'Magburaka', state: 'Northern Province', pincode: 'Magburaka Town',
         price: 3600, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1350,
         amenities: 'Garden, Parking, Borehole Water, Veranda, Fenced Compound, Security', status: 'rented', is_furnished: false,
-        images: [px(18514152), px(27164969), px(13043955), px(33868434)],
+        images: [18514152, 27164969, 13043955, 33868434],
         created_at: isoDaysAgo(25), updated_at: isoDaysAgo(25)
       }
     ];
@@ -1035,10 +1091,10 @@
   /* ---------------- Store: read/write helpers ---------------- */
   /* Coerce any Blob into a File so the Appwrite SDK (which matches
      payloads with `instanceof File`) can upload it. */
-  function coerceToFile(blob) {
+  function coerceToFile(blob, name) {
     if (blob && blob instanceof File) { return blob; }
     var safeType = (blob && blob.type) || 'image/jpeg';
-    var safeName = 'property-' + Date.now() + '.' + (safeType.split('/')[1] || 'jpg');
+    var safeName = name || ('property-' + Date.now() + '.' + (safeType.split('/')[1] || 'jpg'));
     return new File([blob], safeName, { type: safeType });
   }
 
@@ -1757,6 +1813,39 @@
       demoProperties().some(function (p) { return !Store.findProperty(p.id); });
   }
 
+  function photoIdFromUrl(url) {
+    var m = /^https:\/\/images\.pexels\.com\/photos\/(\d+)\//.exec(String(url || ''));
+    return m ? m[1] : '';
+  }
+
+  /* Uploads any sample photo that is still hotlinked, so every sample listing
+     ends up backed by the project's own Storage bucket instead of a CDN. Rows
+     that already point at the bucket are left alone, so this is a no-op once
+     the first run has completed. */
+  function upgradeDemoImages() {
+    var tasks = Store.properties
+      .filter(function (p) { return Store.isDemoProperty(p) && !hasStoredImages(p); })
+      .map(function (p) {
+        var images = p.images || [];
+        var uploads = [];
+        images.forEach(function (url, i) {
+          if (isStoredImage(url)) { return; }
+          var photoId = photoIdFromUrl(url);
+          if (photoId) {
+            uploads.push(uploadSamplePhoto(photoId).then(function (stored) {
+              images[i] = stored;
+            }));
+          }
+        });
+        if (!uploads.length) { return Promise.resolve(null); }
+        return Promise.all(uploads).then(function () {
+          p.images = images;
+          return Store.updateProperty(p);
+        });
+      });
+    return chainOf(tasks);
+  }
+
   /* Idempotent: safe to run more than once. Creates demo accounts,
      users, properties, bookings and reviews. */
   function seedDemo() {
@@ -1781,9 +1870,15 @@
     });
 
     demoProperties().forEach(function (p) {
-      chain = chain.then(function () {
-        return createRowIfMissing(tableId('properties'), p.id, propertyData(p));
-      });
+      chain = chain
+        .then(function () {
+          return uploadSamplePhotos(p.images);
+        })
+        .then(function (urls) {
+          var row = propertyData(p);
+          row.images = urls;
+          return createRowIfMissing(tableId('properties'), p.id, row);
+        });
     });
 
     demoBookings().forEach(function (b) {
@@ -1865,6 +1960,9 @@
             return seedDemo();
           }
         })
+        .then(function () {
+          if (!offline) { return upgradeDemoImages(); }
+        })
         .catch(function (err) {
           offline = true;
           console.error('RentEase init failed:', err);
@@ -1900,6 +1998,7 @@
     init: init,
     seedDemo: seedDemo,
     resetDemo: resetDemo,
+    upgradeDemoImages: upgradeDemoImages,
     placeholderImage: placeholderImage,
     uploadPropertyImage: uploadPropertyImage,
     nowISO: nowISO,

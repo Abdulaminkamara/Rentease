@@ -63,11 +63,15 @@ const Appwrite = {
   Storage: class {
     constructor(client) { this.client = client; }
     async createFile({ bucketId, fileId, file }) {
-      if (!this.client.files) this.client.files = {};
-      this.client.files[fileId] = file;
+      if (bucketId !== 'property_photos') throw { code: 404, message: 'No such bucket' };
+      if (Appwrite.files[fileId]) throw { code: 409, message: 'File already exists' };
+      Appwrite.files[fileId] = { bucketId, name: file && file.name, size: file && file.size };
+      Appwrite.fetches++;
       return { $id: fileId };
     }
   },
+  files: {},
+  fetches: 0,
   TablesDB: class {
     constructor() { this.data = Appwrite.tables; }
     row(table) { if (!this.data[table]) this.data[table] = {}; return this.data[table]; }
@@ -95,6 +99,7 @@ const Appwrite = {
 };
 
 /* ---------------- load app code ---------------- */
+const fetchedUrls = [];
 const sandbox = {
   Appwrite,
   localStorage: makeLocalStorage(),
@@ -102,7 +107,18 @@ const sandbox = {
   setTimeout,
   clearTimeout,
   URL,
-  Blob
+  Blob,
+  File,
+  /* Stands in for the browser fetching each sample photo before upload, so
+     the real upload path runs without touching the network. */
+  fetch: async (url) => {
+    fetchedUrls.push(String(url));
+    return {
+      ok: true,
+      status: 200,
+      blob: async () => new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], { type: 'image/jpeg' })
+    };
+  }
 };
 sandbox.window = sandbox;
 const context = vm.createContext(sandbox);
@@ -155,6 +171,63 @@ section('Sample data reaches the browse page');
   );
   /* Re-seeding must not reappear as a duplicate set of rows. */
   ok(new Set(Store.properties.map((p) => p.id)).size === 30, 'property ids are unique');
+}
+
+const BUCKET_PATH = '/storage/buckets/property_photos/files/';
+const ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
+
+section('Sample photos are really uploaded to the Storage bucket');
+{
+  const allImages = Store.properties.flatMap((p) => p.images);
+
+  ok(Object.keys(Appwrite.files).length > 0, 'photos were uploaded to the bucket (' + Object.keys(Appwrite.files).length + ' files)');
+  ok(
+    allImages.every((src) => src.startsWith(ENDPOINT + BUCKET_PATH) && src.includes('?project=')),
+    'every seeded photo is a bucket /view URL, not a hotlinked image'
+  );
+  ok(
+    allImages.every((src) => !/pexels|images\.unsplash|http:\/\//.test(src)),
+    'no seeded photo still points at an external CDN'
+  );
+
+  const fileIds = allImages.map((src) => src.slice(src.indexOf(BUCKET_PATH) + BUCKET_PATH.length).split('/')[0]);
+  ok(
+    fileIds.every((id) => !!Appwrite.files[id]),
+    'each stored URL resolves to a file that exists in the bucket'
+  );
+
+  /* A photo reused by two listings must be stored once. */
+  const shared = '15691650';
+  const sharers = Store.properties.filter((p) => p.images.some((src) => src.includes('demo-img-' + shared)));
+  ok(sharers.length > 1, 'one photo is reused by several listings (' + sharers.length + ')');
+  ok(
+    new Set(sharers.flatMap((p) => p.images.filter((s) => s.includes('demo-img-' + shared)))).size === 1,
+    'a reused photo is stored once and shared, not duplicated'
+  );
+
+  ok(fetchedUrls.length > 0 && fetchedUrls.every((u) => u.includes('images.pexels.com/')), 'each photo was downloaded before upload');
+}
+
+section('A hotlinked sample photo is pulled into the bucket on the next load');
+{
+  /* Reproduces rows seeded before this change existed: Pexels URLs in the DB.
+     `init()` memoises, so the upgrade step is invoked directly — this is the
+     exact call `init()` makes on first load. */
+  const target = Store.findProperty('prop1');
+  const mixed = target.images.slice();
+  mixed[0] = 'https://images.pexels.com/photos/18153132/pexels-photo-18153132.jpeg?auto=compress&cs=tinysrgb&w=900';
+  mixed[mixed.length - 1] = 'https://images.pexels.com/photos/264507/pexels-photo-264507.jpeg?auto=compress&cs=tinysrgb&w=900';
+  await RE.Store.updateProperty(Object.assign({}, target, { images: mixed }));
+  await RE.upgradeDemoImages();
+
+  const after = Store.findProperty('prop1');
+  ok(after.images.every((src) => src.startsWith(ENDPOINT + BUCKET_PATH)), 'the hotlinked photos were replaced with bucket URLs');
+  ok(after.images.length === mixed.length, 'the photo count is unchanged by the upgrade');
+  ok(after.images[1] === mixed[1], 'photos already in the bucket were kept, not re-uploaded');
+  ok(
+    after.images.every((src) => src.slice(src.indexOf(BUCKET_PATH) + BUCKET_PATH.length).split('/')[0] in Appwrite.files),
+    'every upgraded photo resolves to a stored file'
+  );
 }
 
 section('Ownership guard');
@@ -270,7 +343,8 @@ section('Idempotent re-seed');
     reviews: Store.reviews.length,
     rentals: Store.rentals.length,
     payments: Store.payments.length,
-    notifications: Store.notifications.length
+    notifications: Store.notifications.length,
+    files: Object.keys(Appwrite.files).length
   };
   await RE.seedDemo();
   await Store.loadAll();
@@ -279,6 +353,8 @@ section('Idempotent re-seed');
   ok(Store.bookings.length === before.bookings, 'seeding again does not duplicate bookings');
   ok(Store.rentals.length === before.rentals, 'seeding again does not duplicate rentals');
   ok(Store.payments.length === before.payments, 'seeding again does not duplicate payments');
+  ok(Object.keys(Appwrite.files).length === before.files,
+    'seeding again re-uses the stored photos instead of re-uploading (' + before.files + ' files)');
 }
 
 section('Re-seed is per-row, so one missing listing never blanks the browse page');
