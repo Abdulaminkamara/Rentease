@@ -36,9 +36,10 @@ Authentication is handled by **Appwrite Account** and all data (users, propertie
 
 > **This project's live Cloud backend is already configured.** Database
 > `6ab57cc00006dfad73ba` (project `6ab57b9a00083af710b3`) has all nine tables,
-> every index and the `any` full-CRUD permissions; the three demo accounts
-> (`admin`, `landlord`, `tenant`) already exist. Tables start **empty**, so the
-> first page load auto-seeds. The steps below are for setting it up from scratch.
+> every index and the `any` full-CRUD permissions. The demo accounts
+> (`admin`, `landlord`…`landlord4`, `tenant`…`tenant4`) already exist. Loading any
+> page seeds the sample data that is **missing** — see step 2. The steps below
+> are for setting it up from scratch.
 
 1. Create a free project at [https://cloud.appwrite.io](https://cloud.appwrite.io) (or self-host Appwrite and use its endpoint, e.g. `http://localhost/v1`).
 2. Open your project → **Settings** → copy the **Project ID** and the **API Endpoint**.
@@ -84,7 +85,13 @@ npx serve .
 # OR VS Code -> Live Server extension
 ```
 
-Open **http://localhost:8000**. On the **first load**, when the `users` table is empty, RentEase automatically seeds the demo data: three accounts (admin, landlord, tenant), **sixteen sample properties** across Sierra Leone neighbourhoods (Wilberforce, Lumley, Aberdeen, Hill Station, Wellington, Juba, Brookfields, Goderich, Kissy, Congo Town, Bo, Waterloo), two pending booking requests, one active rental (with one **recorded** payment), saved properties, event notifications and two reviews. Refresh the page once seeding finishes (you can watch it in the browser console). Seeding is **idempotent** – re-running it never duplicates data. Rent payments scheduled/statuses are **derived** from the rental + recorded payments, never fabricated.
+Open **http://localhost:8000**. On load, RentEase checks the demo rows themselves and seeds **anything missing** (it never duplicates what is already there). The sample data is:
+
+- **9 demo accounts** — 1 admin, **4 landlords** (`landlord@`, `landlord2@`, `landlord3@`, `landlord4@`), **4 tenants** (`tenant@`, `tenant2@`, `tenant3@`, `tenant4@`, all `@demo.com`)
+- **30 sample properties across ten Sierra Leonean cities** — Freetown (Wilberforce, Lumley, Aberdeen, Hill Station, Wellington, Juba, Brookfields, Goderich, Kissy, Congo Town), Waterloo, **Bo, Kenema, Makeni, Port Loko, Koidu, Kabala, Lunsar, Magburaka** — each with a price in **Nle**, a description, amenities and photos. **27 are `available`** and therefore appear on the browse page (3 pages of 9); the rest demonstrate the `pending` and `rented` states.
+- 6 booking requests (3 still pending, spread across the different landlords' dashboards), 2 active rentals, 2 **recorded** payments (one paid in full, one part-paid), 3 reviews, 4 saved properties and event notifications for the new accounts
+
+Seeding is **idempotent** – re-running it never duplicates data, and it is triggered per missing **row** rather than per empty **table**, so registering your own account can never leave the browse page empty. Rent payments scheduled/statuses are **derived** from the rental + recorded payments, never fabricated.
 
 All seeded properties are **clearly labelled demo data**: each card and detail page carries a "Sample Listing" badge and the detail page shows an explanation banner, so visitors never mistake the stock photos for a real property at that address.
 
@@ -98,7 +105,15 @@ If you see a yellow **"Appwrite is not configured"** notice, you forgot step 6.
 |----------|------------------------|--------------|
 | Admin    | admin@demo.com         | admin123     |
 | Landlord | landlord@demo.com      | landlord123  |
+| Landlord | landlord2@demo.com     | landlord123  |
+| Landlord | landlord3@demo.com     | landlord123  |
+| Landlord | landlord4@demo.com     | landlord123  |
 | Tenant   | tenant@demo.com        | tenant123    |
+| Tenant   | tenant2@demo.com       | tenant123    |
+| Tenant   | tenant3@demo.com       | tenant123    |
+| Tenant   | tenant4@demo.com       | tenant123    |
+
+Each landlord sees only **their own** listings, requests and rentals in the landlord dashboard, so logging in as a different landlord shows a different portfolio.
 
 ---
 

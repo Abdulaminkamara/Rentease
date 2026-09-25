@@ -9,8 +9,9 @@
 
    The values below already point at the project's live Cloud
    backend (all nine tables + indexes + permissions exist; demo
-   accounts admin@/landlord@/tenant@demo.com are created; the
-   tables are left empty so the app auto-seeds on first load).
+   accounts admin@/landlord@…/tenant@…@demo.com are created). Any
+   sample data that is missing is seeded on load, so the browse page
+   is always populated.
 
    For a quick local test you can also self-host Appwrite and
    point `endpoint` at it, e.g. 'http://localhost/v1'.

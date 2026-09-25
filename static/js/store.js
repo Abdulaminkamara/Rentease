@@ -514,9 +514,49 @@
         email: 'tenant@demo.com', password: 'tenant123',
         full_name: 'Fatmata Sesay', phone: '+232 88 234 567',
         role: 'tenant', created_at: isoDaysAgo(35)
+      },
+      {
+        id: 'landlord2', account_id: 'landlord2', username: 'kenema-landlord',
+        email: 'landlord2@demo.com', password: 'landlord123',
+        full_name: 'Aminata Conteh', phone: '+232 76 555 011',
+        role: 'landlord', created_at: isoDaysAgo(33)
+      },
+      {
+        id: 'landlord3', account_id: 'landlord3', username: 'makeni-landlord',
+        email: 'landlord3@demo.com', password: 'landlord123',
+        full_name: 'Ibrahim Turay', phone: '+232 77 555 022',
+        role: 'landlord', created_at: isoDaysAgo(29)
+      },
+      {
+        id: 'landlord4', account_id: 'landlord4', username: 'bo-landlord',
+        email: 'landlord4@demo.com', password: 'landlord123',
+        full_name: 'Hawa Bangura', phone: '+232 78 555 033',
+        role: 'landlord', created_at: isoDaysAgo(24)
+      },
+      {
+        id: 'tenant2', account_id: 'tenant2', username: 'freetown-tenant',
+        email: 'tenant2@demo.com', password: 'tenant123',
+        full_name: 'Mariam Koroma', phone: '+232 88 555 044',
+        role: 'tenant', created_at: isoDaysAgo(30)
+      },
+      {
+        id: 'tenant3', account_id: 'tenant3', username: 'bo-tenant',
+        email: 'tenant3@demo.com', password: 'tenant123',
+        full_name: 'Joseph Sesay', phone: '+232 79 555 055',
+        role: 'tenant', created_at: isoDaysAgo(27)
+      },
+      {
+        id: 'tenant4', account_id: 'tenant4', username: 'kenema-tenant',
+        email: 'tenant4@demo.com', password: 'tenant123',
+        full_name: 'Isatu Sankoh', phone: '+232 76 555 066',
+        role: 'tenant', created_at: isoDaysAgo(21)
       }
     ];
   }
+
+  /* Ids of the demo landlord accounts. Everything they list is sample
+     data and must carry the "Sample Listing" badge. */
+  var DEMO_LANDLORD_IDS = ['landlord', 'landlord2', 'landlord3', 'landlord4'];
 
   /* Builds a Pexels CDN image URL for a demo photo id. Pexels images are
      freely reusable; we use them only as illustrative placeholders for
@@ -691,6 +731,150 @@
         amenities: 'WiFi, Borehole Water, Security, Fenced Compound', status: 'available', is_furnished: true,
         images: [px(12422474), px(7546648), px(6782479), px(4221389), px(12329135)],
         created_at: isoDaysAgo(5), updated_at: isoDaysAgo(5)
+      },
+      {
+        id: 'prop17', landlord_id: 'landlord2',
+        title: '3-Bedroom Family House in Kenema Town',
+        description: 'A comfortable three-bedroom family house in Kenema Town, a short walk from the Kenema market and the main market road. Tiled floors, a spacious sitting room and a fenced compound with shade trees. Reliable borehole water and space for one car. Close to schools and the Kenema hospital.',
+        address: '', city: 'Kenema', state: 'Eastern Province', pincode: 'Kenema Town',
+        price: 4500, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1400,
+        amenities: 'Garden, Parking, Borehole Water, Fenced Compound, Security', status: 'available', is_furnished: false,
+        images: [px(7061662), px(30386991), px(6934170), px(7045356)],
+        created_at: isoDaysAgo(7), updated_at: isoDaysAgo(7)
+      },
+      {
+        id: 'prop18', landlord_id: 'landlord2',
+        title: '2-Bedroom Apartment near Kenema Market',
+        description: 'A neat two-bedroom apartment close to Kenema market and the Dodo road junction, popular with traders and civil servants. Tiled throughout with a fitted kitchen, standby generator and a shared borehole. Quiet compound with parking at the front.',
+        address: '', city: 'Kenema', state: 'Eastern Province', pincode: 'Dodo',
+        price: 2800, property_type: 'apartment', bedrooms: 2, bathrooms: 2, area_sqft: 900,
+        amenities: 'WiFi, Parking, Generator, Borehole Water, Fitted Kitchen, Security', status: 'available', is_furnished: true,
+        images: [px(12081268), px(27164969), px(13043955), px(6186828)],
+        created_at: isoDaysAgo(4), updated_at: isoDaysAgo(4)
+      },
+      {
+        id: 'prop19', landlord_id: 'landlord2',
+        title: 'Affordable Single Room in Kenema',
+        description: 'A self-contained single room in a shared family compound in Kenema with treated water, electricity and WiFi. Suits students at Njala University and young workers starting out. Weekly housekeeping available on request and a secure gate at night.',
+        address: '', city: 'Kenema', state: 'Eastern Province', pincode: 'Kenema Field',
+        price: 1100, property_type: 'room', bedrooms: 1, bathrooms: 1, area_sqft: 200,
+        amenities: 'WiFi, Borehole Water, Housekeeping, Security, Fenced Compound', status: 'available', is_furnished: true,
+        images: [px(1974596), px(9899871), px(4221389), px(12329135)],
+        created_at: isoDaysAgo(6), updated_at: isoDaysAgo(6)
+      },
+      {
+        id: 'prop20', landlord_id: 'landlord2',
+        title: 'Furnished 2-Bedroom Flat at Kenema Heights',
+        description: 'A fully furnished two-bedroom flat on the quieter side of Kenema with cool mountain air, a private balcony and 24-hour water. Comes with kitchen appliances, bedroom furniture and a backup generator. Very secure and well kept, popular with long-stay tenants.',
+        address: '', city: 'Kenema', state: 'Eastern Province', pincode: 'Kenema Heights',
+        price: 3500, property_type: 'apartment', bedrooms: 2, bathrooms: 2, area_sqft: 950,
+        amenities: 'WiFi, Furnished, AC, Generator, Borehole Water, 24h Security, Fitted Kitchen', status: 'available', is_furnished: true,
+        verification: 'verified',
+        images: [px(15691650), px(38975400), px(6434592), px(6527057)],
+        created_at: isoDaysAgo(2), updated_at: isoDaysAgo(2)
+      },
+      {
+        id: 'prop21', landlord_id: 'landlord2',
+        title: '3-Bedroom House off Makeni Road, Port Loko',
+        description: 'A solid three-bedroom house a few minutes from the Port Loko town centre along the Makeni road, with a large compound that suits a growing family. Borehole water, a covered front porch and room for two vehicles. Schools and the market are within walking distance.',
+        address: '', city: 'Port Loko', state: 'Northern Province', pincode: 'Makeni Road',
+        price: 3800, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1250,
+        amenities: 'Parking, Borehole Water, Fenced Compound, Garden, Security', status: 'available', is_furnished: false,
+        images: [px(9308434), px(7546648), px(6903157), px(7045356)],
+        created_at: isoDaysAgo(10), updated_at: isoDaysAgo(10)
+      },
+      {
+        id: 'prop22', landlord_id: 'landlord2',
+        title: '4-Bedroom Family House in Koidu',
+        description: 'A generously sized four-bedroom home in Koidu with high ceilings that keep the rooms cool, a mature garden and a walled compound. Good for a large household, with borehole water, a stand-by generator and covered parking. Close to the Koidu town centre and the main hospital road.',
+        address: '', city: 'Koidu', state: 'North East Province', pincode: 'Koidu Town',
+        price: 5200, property_type: 'house', bedrooms: 4, bathrooms: 3, area_sqft: 2100,
+        amenities: 'Private Garden, Parking, Generator, Borehole Water, CCTV, Fenced Compound', status: 'available', is_furnished: true,
+        images: [px(34277690), px(34688219), px(34574606), px(6957081)],
+        created_at: isoDaysAgo(17), updated_at: isoDaysAgo(17)
+      },
+      {
+        id: 'prop23', landlord_id: 'landlord3',
+        title: '3-Bedroom Family House in Makeni',
+        description: 'A well maintained three-bedroom house in the Makeni town area with a level compound, shade trees and a cool veranda to sit on in the afternoon. Borehole water with a storage tank, parking for one car and a locked front gate. Very close to the Wusum market and secondary schools.',
+        address: '', city: 'Makeni', state: 'Northern Province', pincode: 'Makeni Town',
+        price: 4000, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1300,
+        amenities: 'Veranda, Parking, Borehole Water, Garden, Fenced Compound, Security', status: 'available', is_furnished: true,
+        verification: 'verified',
+        images: [px(15691650), px(7712453), px(8134818), px(18033166)],
+        created_at: isoDaysAgo(8), updated_at: isoDaysAgo(8)
+      },
+      {
+        id: 'prop24', landlord_id: 'landlord3',
+        title: '2-Bedroom Apartment in Lunsar',
+        description: 'A tidy two-bedroom apartment in Lunsar town with tiled floors, a fitted kitchen and reliable water from the community supply with a backup borehole. Popular with nurses and teachers stationed at the local clinic. Secure compound with room for one vehicle.',
+        address: '', city: 'Lunsar', state: 'Northern Province', pincode: 'Lunsar Town',
+        price: 2200, property_type: 'apartment', bedrooms: 2, bathrooms: 1, area_sqft: 800,
+        amenities: 'Parking, Borehole Water, Fitted Kitchen, Security, Fenced Compound', status: 'available', is_furnished: false,
+        images: [px(6400270), px(12422474), px(29012619), px(7031719)],
+        created_at: isoDaysAgo(13), updated_at: isoDaysAgo(13)
+      },
+      {
+        id: 'prop25', landlord_id: 'landlord3',
+        title: 'Modern Studio Flat in Makeni',
+        description: 'A compact, neatly finished studio in Makeni for one person or a couple, with a small kitchen area, a study desk and fast WiFi. Water is always available and the compound is quiet after work hours. A sensible first home away from Freetown or a base while teaching.',
+        address: '', city: 'Makeni', state: 'Northern Province', pincode: 'Maghnik',
+        price: 1800, property_type: 'studio', bedrooms: 1, bathrooms: 1, area_sqft: 380,
+        amenities: 'WiFi, Borehole Water, Housekeeping, Security, Fitted Kitchen', status: 'available', is_furnished: true,
+        images: [px(8762759), px(7546648), px(6782479), px(4221389)],
+        created_at: isoDaysAgo(5), updated_at: isoDaysAgo(5)
+      },
+      {
+        id: 'prop26', landlord_id: 'landlord3',
+        title: 'Executive Villa with Garden in Kabala',
+        description: 'A spacious four-bedroom villa in Kabala with a landscaped front garden, an outdoor sitting area and views over the hills. Treated water supply, standby generator, solar backup and round-the-clock security. Built for a family that wants land, quiet and room to host visitors.',
+        address: '', city: 'Kabala', state: 'Northern Province', pincode: 'Kabala Town',
+        price: 7500, property_type: 'villa', bedrooms: 4, bathrooms: 3, area_sqft: 2800,
+        amenities: 'Private Garden, Parking, AC, Generator, Solar Backup, Borehole Water, 24h Security', status: 'available', is_furnished: true,
+        verification: 'verified',
+        images: [px(38865714), px(8134818), px(34574606), px(6527057)],
+        created_at: isoDaysAgo(19), updated_at: isoDaysAgo(19)
+      },
+      {
+        id: 'prop27', landlord_id: 'landlord4',
+        title: '3-Bedroom House near Bo Commercial Street',
+        description: 'A nicely built three-bedroom house a few streets back from Bo Commercial Street, with a big sitting room, tiled floors and a walled compound. Borehole water, a stand-by generator and parking for two vehicles. Close to the Bo Government Hospital, schools and the main bus depot.',
+        address: '', city: 'Bo', state: 'Southern Province', pincode: 'Bo Town',
+        price: 4800, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1500,
+        amenities: 'Parking, Generator, Borehole Water, Garden, CCTV, Fenced Compound', status: 'available', is_furnished: true,
+        images: [px(12919815), px(12740950), px(6980724), px(14631824)],
+        created_at: isoDaysAgo(9), updated_at: isoDaysAgo(9)
+      },
+      {
+        id: 'prop28', landlord_id: 'landlord4',
+        title: 'Furnished 2-Bedroom Apartment in Njala',
+        description: 'A fully furnished two-bedroom apartment in the Njala area of Bo, popular with university staff and NGO workers. Open-plan lounge and kitchen, backup generator, treated water and a secure gate. Everything a tenant needs is already in place, so moving in takes a day.',
+        address: '', city: 'Bo', state: 'Southern Province', pincode: 'Njala',
+        price: 3200, property_type: 'apartment', bedrooms: 2, bathrooms: 2, area_sqft: 900,
+        amenities: 'WiFi, Furnished, AC, Generator, Borehole Water, Security, Fitted Kitchen', status: 'available', is_furnished: true,
+        verification: 'verified',
+        images: [px(11643330), px(30386991), px(6934170), px(15456260)],
+        created_at: isoDaysAgo(3), updated_at: isoDaysAgo(3)
+      },
+      {
+        id: 'prop29', landlord_id: 'landlord4',
+        title: 'Compact Studio near Bo Main Market',
+        description: 'A small, clean studio a few minutes walk from Bo main market, suited to a single professional or a student at Njala University. Includes a kitchen corner, WiFi and constant water in a friendly shared compound. Cheap, safe and easy to maintain.',
+        address: '', city: 'Bo', state: 'Southern Province', pincode: 'Konti',
+        price: 2000, property_type: 'studio', bedrooms: 1, bathrooms: 1, area_sqft: 350,
+        amenities: 'WiFi, Borehole Water, Housekeeping, Security, Fenced Compound', status: 'available', is_furnished: true,
+        images: [px(12422474), px(7546648), px(7031719), px(12329135)],
+        created_at: isoDaysAgo(6), updated_at: isoDaysAgo(6)
+      },
+      {
+        id: 'prop30', landlord_id: 'landlord4',
+        title: 'Family Home with Garden in Magburaka',
+        description: 'A three-bedroom family home in Magburaka set in a green compound with fruit trees and a covered veranda, ten minutes from the main road. Borehole water, ample parking and a secure gate. Currently tenanted, shown here as a sample of an occupied listing.',
+        address: '', city: 'Magburaka', state: 'Northern Province', pincode: 'Magburaka Town',
+        price: 3600, property_type: 'house', bedrooms: 3, bathrooms: 2, area_sqft: 1350,
+        amenities: 'Garden, Parking, Borehole Water, Veranda, Fenced Compound, Security', status: 'rented', is_furnished: false,
+        images: [px(18514152), px(27164969), px(13043955), px(33868434)],
+        created_at: isoDaysAgo(25), updated_at: isoDaysAgo(25)
       }
     ];
   }
@@ -710,6 +894,34 @@
         message: 'Please keep the room ready for the beginning of next month.',
         status: 'approved', total_amount: 1800,
         created_at: isoDaysAgo(25), updated_at: isoDaysAgo(15)
+      },
+      {
+        id: 'book3', property_id: 'prop19', tenant_id: 'tenant4',
+        start_date: isoDaysFromNow(6), end_date: isoDaysFromNow(186),
+        message: 'I am starting a teaching post in Kenema in a few weeks and would like a long stay in a quiet compound. Is the WiFi included in the rent?',
+        status: 'pending', total_amount: 1100,
+        created_at: isoDaysAgo(4), updated_at: isoDaysAgo(4)
+      },
+      {
+        id: 'book4', property_id: 'prop29', tenant_id: 'tenant3',
+        start_date: isoDaysFromNow(3), end_date: isoDaysFromNow(93),
+        message: 'I work at the regional hospital and need something close to the main market. I can move in at short notice.',
+        status: 'pending', total_amount: 2000,
+        created_at: isoDaysAgo(2), updated_at: isoDaysAgo(2)
+      },
+      {
+        id: 'book5', property_id: 'prop23', tenant_id: 'tenant4',
+        start_date: isoDaysFromNow(11), end_date: isoDaysFromNow(191),
+        message: 'My family may be transferred to Makeni in the next term. Could we arrange a viewing this weekend and discuss a longer lease?',
+        status: 'pending', total_amount: 4000,
+        created_at: isoDaysAgo(1), updated_at: isoDaysAgo(1)
+      },
+      {
+        id: 'book6', property_id: 'prop30', tenant_id: 'tenant2',
+        start_date: isoDaysFromNow(-18), end_date: isoDaysFromNow(72),
+        message: 'We are a family of four and love the garden. We paid the deposit in person and moved in last month.',
+        status: 'approved', total_amount: 3600,
+        created_at: isoDaysAgo(22), updated_at: isoDaysAgo(18)
       }
     ];
   }
@@ -725,6 +937,11 @@
         id: 'rev2', property_id: 'prop2', tenant_id: 'tenant',
         rating: 4, comment: 'Nice little studio with good natural light and superb WiFi. A bit small but perfect for one person.',
         created_at: isoDaysAgo(8)
+      },
+      {
+        id: 'rev3', property_id: 'prop30', tenant_id: 'tenant2',
+        rating: 5, comment: 'The garden and the veranda make this a calm place to come home to, and the water supply has never failed. Hawa was helpful from the first viewing.',
+        created_at: isoDaysAgo(9)
       }
     ];
   }
@@ -732,7 +949,9 @@
   function demoSaved() {
     return [
       { id: 'saved1', user_id: 'tenant', property_id: 'prop2', created_at: isoDaysAgo(3) },
-      { id: 'saved2', user_id: 'tenant', property_id: 'prop6', created_at: isoDaysAgo(1) }
+      { id: 'saved2', user_id: 'tenant', property_id: 'prop6', created_at: isoDaysAgo(1) },
+      { id: 'saved3', user_id: 'tenant2', property_id: 'prop20', created_at: isoDaysAgo(2) },
+      { id: 'saved4', user_id: 'tenant3', property_id: 'prop26', created_at: isoDaysAgo(1) }
     ];
   }
 
@@ -743,6 +962,12 @@
         booking_id: 'book2', start_date: isoDaysFromNow(-20), end_date: isoDaysFromNow(10),
         rent_amount: 1800, payment_frequency: 'monthly', deposit: 1800, terms: 'Water and electricity not included.',
         status: 'active', created_at: isoDaysAgo(15), updated_at: isoDaysAgo(15)
+      },
+      {
+        id: 'rent2', property_id: 'prop30', tenant_id: 'tenant2', landlord_id: 'landlord4',
+        booking_id: 'book6', start_date: isoDaysFromNow(-18), end_date: isoDaysFromNow(72),
+        rent_amount: 3600, payment_frequency: 'monthly', deposit: 3600, terms: 'Rent paid monthly in cash to the landlord. Compound maintenance is included.',
+        status: 'active', created_at: isoDaysAgo(18), updated_at: isoDaysAgo(18)
       }
     ];
   }
@@ -753,6 +978,11 @@
         id: 'pay1', rental_id: 'rent1', amount: 1800,
         period_start: isoDaysFromNow(-20), period_end: isoDaysFromNow(10),
         reference: 'NIGHT-DIRECT', recorded_by: 'landlord', paid_at: isoDaysAgo(18)
+      },
+      {
+        id: 'pay2', rental_id: 'rent2', amount: 2000,
+        period_start: isoDaysFromNow(-18), period_end: isoDaysFromNow(12),
+        reference: 'MOMO-884-12', recorded_by: 'landlord4', paid_at: isoDaysAgo(6)
       }
     ];
   }
@@ -773,6 +1003,31 @@
         id: 'notif3', user_id: 'admin', type: 'info',
         title: 'Welcome', message: 'You have platform administration access for the demo.',
         link: 'admin-dashboard.html', read_at: '', created_at: isoDaysAgo(60)
+      },
+      {
+        id: 'notif4', user_id: 'landlord2', type: 'info',
+        title: 'New booking request', message: 'Isatu Sankoh requested to rent "Affordable Single Room in Kenema".',
+        link: 'landlord-dashboard.html', read_at: '', created_at: isoDaysAgo(4)
+      },
+      {
+        id: 'notif5', user_id: 'landlord3', type: 'info',
+        title: 'New booking request', message: 'Isatu Sankoh requested to rent "3-Bedroom Family House in Makeni".',
+        link: 'landlord-dashboard.html', read_at: '', created_at: isoDaysAgo(1)
+      },
+      {
+        id: 'notif6', user_id: 'landlord4', type: 'info',
+        title: 'New booking request', message: 'Joseph Sesay requested to rent "Compact Studio near Bo Main Market".',
+        link: 'landlord-dashboard.html', read_at: '', created_at: isoDaysAgo(2)
+      },
+      {
+        id: 'notif7', user_id: 'tenant2', type: 'success',
+        title: 'Rental confirmed', message: 'Your request for "Family Home with Garden in Magburaka" was approved. Your rental is now active.',
+        link: 'tenant-dashboard.html', read_at: '', created_at: isoDaysAgo(18)
+      },
+      {
+        id: 'notif8', user_id: 'tenant4', type: 'info',
+        title: 'Request sent', message: 'Your request for "Affordable Single Room in Kenema" has been sent to the landlord.',
+        link: 'tenant-dashboard.html', read_at: '', created_at: isoDaysAgo(4)
       }
     ];
   }
@@ -894,10 +1149,10 @@
       return !!user && !!prop && (user.role === 'admin' || eq(prop.landlord_id, user.id));
     },
     /* Demo properties are the sample listings bundled with the app (all
-       owned by the "landlord" demo account). They are labelled
+       owned by the demo landlord accounts). They are labelled
        "Sample Listing" so visitors never mistake them for real rentals. */
     isDemoProperty: function (prop) {
-      return !!prop && eq(prop.landlord_id, 'landlord');
+      return !!prop && DEMO_LANDLORD_IDS.indexOf(String(prop.landlord_id)) !== -1;
     },
     publicProperties: function () {
       return this.properties.filter(function (p) { return p.status === 'available'; });
@@ -1492,6 +1747,16 @@
     });
   }
 
+  /* True when any demo user or demo property row is missing from the
+     loaded cache. Gating the seed on `users.length === 0` meant a single
+     self-registered account permanently suppressed the sample data, so
+     the browse page stayed empty. Seeding is idempotent, so checking the
+     demo rows themselves is safe and costs no extra round-trips. */
+  function needsDemoSeed() {
+    return demoUsers().some(function (u) { return !Store.findUser(u.id); }) ||
+      demoProperties().some(function (p) { return !Store.findProperty(p.id); });
+  }
+
   /* Idempotent: safe to run more than once. Creates demo accounts,
      users, properties, bookings and reviews. */
   function seedDemo() {
@@ -1596,7 +1861,7 @@
         .then(function () { return Session.refresh(); })
         .catch(function () { currentUser = null; })
         .then(function () {
-          if (!offline && !Store.users.length) {
+          if (!offline && needsDemoSeed()) {
             return seedDemo();
           }
         })

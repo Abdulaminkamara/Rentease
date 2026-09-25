@@ -69,7 +69,7 @@ const Appwrite = {
     }
   },
   TablesDB: class {
-    constructor() { this.data = {}; }
+    constructor() { this.data = Appwrite.tables; }
     row(table) { if (!this.data[table]) this.data[table] = {}; return this.data[table]; }
     async createRow({ tableId, rowId, data }) {
       const m = this.row(tableId);
@@ -88,7 +88,10 @@ const Appwrite = {
       return m[rowId];
     }
     async deleteRow({ tableId, rowId }) { delete this.row(tableId)[rowId]; }
-  }
+  },
+  /* Row data shared by every TablesDB instance, so tests can inspect and
+     remove backend rows directly. */
+  tables: {}
 };
 
 /* ---------------- load app code ---------------- */
@@ -113,17 +116,46 @@ const Session = RE.Session;
 await RE.init();
 
 section('Seed (idempotent demo data)');
-ok(Store.users.length === 3, '3 demo users seeded (got ' + Store.users.length + ')');
-ok(Store.properties.length === 16, '16 demo properties seeded');
-ok(Store.bookings.length === 2, '2 demo bookings seeded');
-ok(Store.rentals.length === 1, '1 demo rental seeded');
-ok(Store.payments.length === 1, '1 recorded demo payment seeded');
+ok(Store.users.length === 9, '9 demo users seeded (got ' + Store.users.length + ')');
+ok(Store.users.filter((u) => u.role === 'landlord').length === 4, '4 demo landlords seeded');
+ok(Store.users.filter((u) => u.role === 'tenant').length === 4, '4 demo tenants seeded');
+ok(Store.properties.length === 30, '30 demo properties seeded');
+ok(Store.bookings.length === 6, '6 demo bookings seeded');
+ok(Store.rentals.length === 2, '2 demo rentals seeded');
+ok(Store.payments.length === 2, '2 recorded demo payments seeded');
 ok(RE.offline !== true, 'online mode with the real config');
 
 section('Discovery / privacy');
 const pub = Store.publicProperties();
-ok(pub.length === 14, 'only 14 available properties are public (got ' + pub.length + ')');
+ok(pub.length === 27, 'only 27 available properties are public (got ' + pub.length + ')');
 ok(pub.every((p) => p.status === 'available'), 'public list contains no non-available status');
+
+section('Sample data reaches the browse page');
+{
+  const demoLandlords = ['landlord', 'landlord2', 'landlord3', 'landlord4'];
+  const listed = Store.properties.filter((p) => Store.isDemoProperty(p));
+  ok(listed.length === 30, 'every sample property is badged as a Sample Listing');
+  ok(pub.every((p) => Store.isDemoProperty(p)), 'no public listing escapes the Sample Listing badge');
+  ok(
+    demoLandlords.every((id) => Store.propertiesByLandlord(id).length > 0),
+    'each demo landlord has properties of their own'
+  );
+  const provinces = new Set(Store.properties.map((p) => p.city));
+  ok(
+    ['Freetown', 'Bo', 'Kenema', 'Makeni', 'Port Loko', 'Koidu', 'Kabala', 'Lunsar', 'Magburaka', 'Waterloo'].every((c) => provinces.has(c)),
+    'listings cover multiple Sierra Leonean cities'
+  );
+  ok(
+    Store.properties.every((p) => p.title && p.description && p.price > 0 && Array.isArray(p.images) && p.images.length > 0),
+    'every listing has a title, description, price and photos'
+  );
+  ok(
+    Store.properties.filter((p) => p.status === 'available').length >= 9,
+    'at least one full page of 9 available listings exists'
+  );
+  /* Re-seeding must not reappear as a duplicate set of rows. */
+  ok(new Set(Store.properties.map((p) => p.id)).size === 30, 'property ids are unique');
+}
 
 section('Ownership guard');
 const landlord = Store.findUser('landlord');
@@ -131,6 +163,11 @@ const tenant = Store.findUser('tenant');
 ok(Store.canManageProperty(landlord, Store.findProperty('prop1')), 'landlord can manage own property');
 ok(!Store.canManageProperty(tenant, Store.findProperty('prop1')), 'tenant cannot manage someone else\u2019s property');
 ok(Store.canManageProperty(landlord, Store.findProperty('prop3')), 'landlord owns most seeded properties');
+ok(
+  Store.canManageProperty(Store.findUser('landlord2'), Store.findProperty('prop19')) &&
+    !Store.canManageProperty(Store.findUser('landlord2'), Store.findProperty('prop1')),
+  'a second landlord manages only their own properties'
+);
 
 section('Rent status (derived, recorded payments only)');
 const rent1 = Store.rentals.find((r) => r.id === 'rent1');
@@ -138,6 +175,12 @@ const rent1 = Store.rentals.find((r) => r.id === 'rent1');
   const st = RE.rentStatus(rent1);
   ok(st.status === 'paid', 'seeded rental is paid in full for current period (got ' + st.status + ')');
   ok(Store.paymentsForRentalSum('rent1') === 1800, 'paymentsForRentalSum = 1800');
+}
+{
+  const rent2 = Store.rentals.find((r) => r.id === 'rent2');
+  const st = RE.rentStatus(rent2);
+  ok(st.status === 'partial', 'second seeded rental shows a part payment (got ' + st.status + ')');
+  ok(Store.paymentsForRentalSum('rent2') === 2000, 'paymentsForRentalSum = 2000');
 }
 
 section('Booking -> approval -> rental -> rivalry');
@@ -219,9 +262,37 @@ ok(Store.reportsOpen().length >= 1, 'open report is visible to admins');
 ok(Store.notifications.length >= notesBefore + 1, 'admins notified of the report');
 
 section('Idempotent re-seed');
-await RE.seedDemo();
-ok(Store.users.length === 4, 'seeding again does not duplicate users');
-ok(Store.properties.length === 16, 'seeding again does not duplicate properties');
+{
+  const before = {
+    users: Store.users.length,
+    properties: Store.properties.length,
+    bookings: Store.bookings.length,
+    reviews: Store.reviews.length,
+    rentals: Store.rentals.length,
+    payments: Store.payments.length,
+    notifications: Store.notifications.length
+  };
+  await RE.seedDemo();
+  await Store.loadAll();
+  ok(Store.users.length === before.users, 'seeding again does not duplicate users');
+  ok(Store.properties.length === before.properties, 'seeding again does not duplicate properties');
+  ok(Store.bookings.length === before.bookings, 'seeding again does not duplicate bookings');
+  ok(Store.rentals.length === before.rentals, 'seeding again does not duplicate rentals');
+  ok(Store.payments.length === before.payments, 'seeding again does not duplicate payments');
+}
+
+section('Re-seed is per-row, so one missing listing never blanks the browse page');
+{
+  /* The old gate only seeded when the users table was completely empty, so a
+     single self-registered account left the browse page empty forever. */
+  delete Appwrite.tables['properties']['prop17'];
+  await RE.seedDemo();
+  await Store.loadAll();
+  ok(Store.findProperty('prop17') !== null, 'a missing sample listing is restored on re-seed');
+  ok(Store.properties.length === 30, 'restoring one listing does not duplicate the rest (got ' + Store.properties.length + ')');
+  /* 27 available, less prop6 which this harness deliberately rented above. */
+  ok(Store.publicProperties().length === 26, 'browse page is fully populated again (got ' + Store.publicProperties().length + ')');
+}
 
 section('Summary');
 console.log('\npassed: ' + passed);
